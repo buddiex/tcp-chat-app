@@ -425,6 +425,8 @@ class ChatServer(object):
                     for client in [self.clients.get_client_by_socket(socket) for socket in recvable_sockets]:
                         try:
                             self.manage_read_request(client)
+                        except SyntaxError as err:
+                            pass
                         except Exception as err:
                             if client.socket() in recvable_sockets:
                                 recvable_sockets.remove(client.socket())
@@ -544,8 +546,9 @@ class ChatServer(object):
             func = getattr(self, "command_"+msg.split(":")[0][1:])
             func (from_client, msg.strip())
         except:
-            self.send_s2c(from_client,"error: invalid command syntax")
-            raise
+            msg='invalid command syntax'
+            self.send_s2c(from_client,"error:"+msg)
+            raise SyntaxError(msg)
 
     def command_handle(self,from_client, msg):
         handle = msg.split(":")[1].strip()
