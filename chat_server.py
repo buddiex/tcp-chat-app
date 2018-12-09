@@ -301,9 +301,10 @@ class ClientConnectionList(list):
     def get_client_by_handle(self, handle):
         """ extract the appropriate connection object from the list, based on the handle """
         candidate_client_objects = [client for client in self if client.handle == handle]
-        assert len(candidate_client_objects) != 0, "?? handle %s not found in list of client objects" % handle
         assert len(  candidate_client_objects) < 2, "?? socket %s appears in list of client objects multiple times" % handle
-        return candidate_client_objects[0]
+        if candidate_client_objects:
+            return candidate_client_objects[0]
+        return None
 
     def __getitem__(self, item):
         result = list.__getitem__(self, item)
@@ -433,6 +434,7 @@ class ChatServer(object):
                             if client.socket() in sendable_sockets:
                                 sendable_sockets.remove(client.socket())
                             print("removing disconnected {} from clients".format(client.getpeername()))
+                            client.close()
                             self.clients.remove(client)
                             # pass
 
@@ -528,7 +530,7 @@ class ChatServer(object):
                 data["payload"] = " ".join(data["payload"].split(" ")[1:])
                 client.enqueue(data)
             else:
-                self.send_s2c(from_client, "client {} does not exit or is disconnected".format(from_client.payload['to']))
+                self.send_s2c(from_client, "client {} does not exit or is disconnected".format(to_handle))
         else:
             self.send_s2c(from_client, "set your handle using /handle:<handle_name> before sending a direct message")
 
